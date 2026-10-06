@@ -1,0 +1,19 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /presentes/{giftId} {
+      // Qualquer pessoa pode consultar a situação dos presentes.
+      allow read: if true;
+
+      // Qualquer pessoa pode criar uma reserva.
+      // A transação no JavaScript impede que duas pessoas reservem o mesmo item.
+      allow create: if request.resource.data.reserved == true
+                    && request.resource.data.name is string;
+
+      // Não permitimos alterar ou apagar uma reserva depois de criada.
+      allow update, delete: if false;
+    }
+  }
+}

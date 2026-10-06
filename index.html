@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lista de Presentes</title>
+  <meta name="description" content="Lista de presentes">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <div class="badge">LISTA DE PRESENTES</div>
+      <h1 id="title">Nosso cantinho</h1>
+      <p id="subtitle">Escolha um presente da nossa lista. Obrigado pelo carinho!</p>
+    </section>
+
+    <div id="status" class="status" hidden></div>
+    <section id="gift-list" class="gift-list" aria-live="polite"></section>
+
+    <footer>
+      <p>Feito com carinho ♥</p>
+    </footer>
+  </main>
+
+  <dialog id="confirm-dialog">
+    <div class="dialog-content">
+      <button class="close" id="close-dialog" aria-label="Fechar">×</button>
+      <h2>Confirmar presente</h2>
+      <p>Você vai reservar:</p>
+      <strong id="selected-name"></strong>
+      <p class="small">Ao confirmar, este presente ficará reservado para que outra pessoa não o escolha.</p>
+      <div class="dialog-actions">
+        <button class="secondary" id="cancel-btn">Voltar</button>
+        <button class="primary" id="confirm-btn">Confirmar</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>
