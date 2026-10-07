@@ -26,7 +26,7 @@ const db = getFirestore(app);
 
 const CONFIG = {
   title: "Meus 15 Anos",
-  subtitle: "Você é especial para mim! Escolha um presente da minha lista e obrigada pelo carinho.",
+  subtitle: "Essas são sugestões carinhosas se você quiser me presentear. Mas o maior presente é ter você em minha festa.",
   collection: "presentes",
 
   gifts: [
