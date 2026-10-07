@@ -37,15 +37,68 @@ const CONFIG = {
   subtitle: "Escolha um presente da nossa lista. Obrigado pelo carinho!",
   collection: "presentes",
 
-  gifts: [
-    { id: "01", name: "Jogo de panelas", description: "Para a nossa cozinha", icon: "🍳" },
-    { id: "02", name: "Jogo de toalhas", description: "Toalhas de banho", icon: "🛁" },
-    { id: "03", name: "Taças de vinho", description: "Para brindar juntos", icon: "🍷" },
-    { id: "04", name: "Jogo de cama", description: "Para o quarto", icon: "🛏️" },
-    { id: "05", name: "Liquidificador", description: "", icon: "🥤" },
-    { id: "06", name: "Cafeteira", description: "", icon: "☕" },
-    { id: "07", name: "Vale-presente", description: "", icon: "🎁" }
-  ]
+gifts: [
+  {
+    id: "01",
+    name: "Roupas",
+    description: "Vestidos e cropped/blusas — tamanho P",
+    icon: "👗"
+  },
+  {
+    id: "02",
+    name: "Jeans",
+    description: "Tamanho 36",
+    icon: "👖"
+  },
+  {
+    id: "03",
+    name: "Tênis",
+    description: "Tamanho 37",
+    icon: "👟"
+  },
+  {
+    id: "04",
+    name: "Semijoias",
+    description: "Colares, brincos e outros acessórios",
+    icon: "💎"
+  },
+  {
+    id: "05",
+    name: "Perfumes e Body Splash",
+    description: "Perfumes ou body splash",
+    icon: "🌸"
+  },
+  {
+    id: "06",
+    name: "Maquiagem",
+    description: "Itens de maquiagem",
+    icon: "💄"
+  },
+  {
+    id: "07",
+    name: "Skincare",
+    description: "Produtos para cuidados com a pele",
+    icon: "🧴"
+  },
+  {
+    id: "08",
+    name: "Vale-compras Riachuelo ou C&A",
+    description: "Vale-presente de qualquer valor",
+    icon: "🎁"
+  },
+  {
+    id: "09",
+    name: "Vale-presente de livraria",
+    description: "Vale-compras para uma livraria",
+    icon: "📚"
+  },
+  {
+    id: "10",
+    name: "Presente via Pix",
+    description: "Chave Pix: pachecobeltrame@gmail.com",
+    icon: "💰"
+  }
+]
 };
 
 document.title = CONFIG.title;
