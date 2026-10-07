@@ -1,4 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+
 import {
   getFirestore,
   collection,
@@ -8,13 +9,11 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
-/*
-  ============================================================
-  1) COLE A CONFIGURAÇÃO DO SEU FIREBASE AQUI
-  ============================================================
-  No Firebase Console:
-  Configurações do projeto > Seus apps > Web app.
-*/
+
+// ============================================================
+// FIREBASE
+// ============================================================
+
 const firebaseConfig = {
   apiKey: "AIzaSyAi8RJqtArujE5DfoaFvh6oDTqrXl6a244",
   authDomain: "lista-presentes-195ac.firebaseapp.com",
@@ -27,210 +26,485 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/*
-  ============================================================
-  2) PERSONALIZE AQUI
-  ============================================================
-*/
+
+// ============================================================
+// CONFIGURAÇÃO DA LISTA
+// ============================================================
+
 const CONFIG = {
   title: "Nosso cantinho",
-  subtitle: "Escolha um presente da nossa lista. Obrigado pelo carinho!",
+
+  subtitle:
+    "Escolha um presente da nossa lista. Obrigado pelo carinho!",
+
   collection: "presentes",
 
-gifts: [
-  {
-    id: "01",
-    name: "Roupas",
-    description: "Vestidos e cropped/blusas — tamanho P",
-    icon: "👗"
-  },
-  {
-    id: "02",
-    name: "Jeans",
-    description: "Tamanho 36",
-    icon: "👖"
-  },
-  {
-    id: "03",
-    name: "Tênis",
-    description: "Tamanho 37",
-    icon: "👟"
-  },
-  {
-    id: "04",
-    name: "Semijoias",
-    description: "Colares, brincos e outros acessórios",
-    icon: "💎"
-  },
-  {
-    id: "05",
-    name: "Perfumes e Body Splash",
-    description: "Perfumes ou body splash",
-    icon: "🌸"
-  },
-  {
-    id: "06",
-    name: "Maquiagem",
-    description: "Itens de maquiagem",
-    icon: "💄"
-  },
-  {
-    id: "07",
-    name: "Skincare",
-    description: "Produtos para cuidados com a pele",
-    icon: "🧴"
-  },
-  {
-    id: "08",
-    name: "Vale-compras Riachuelo ou C&A",
-    description: "Vale-presente de qualquer valor",
-    icon: "🎁"
-  },
-  {
-    id: "09",
-    name: "Vale-presente de livraria",
-    description: "Vale-compras para uma livraria",
-    icon: "📚"
-  },
-  {
-    id: "10",
-    name: "Presente via Pix",
-    description: "Chave Pix: pachecobeltrame@gmail.com",
-    icon: "💰"
-  }
-]
+  gifts: [
+    {
+      id: "01",
+      name: "Roupas",
+      description: "Vestidos e cropped/blusas — tamanho P",
+      icon: "👗"
+    },
+
+    {
+      id: "02",
+      name: "Jeans",
+      description: "Tamanho 36",
+      icon: "👖"
+    },
+
+    {
+      id: "03",
+      name: "Tênis",
+      description: "Tamanho 37",
+      icon: "👟"
+    },
+
+    {
+      id: "04",
+      name: "Semijoias",
+      description: "Colares, brincos e outros acessórios",
+      icon: "💎"
+    },
+
+    {
+      id: "05",
+      name: "Perfumes e Body Splash",
+      description: "Perfumes ou body splash",
+      icon: "🌸"
+    },
+
+    {
+      id: "06",
+      name: "Maquiagem",
+      description: "Itens de maquiagem",
+      icon: "💄"
+    },
+
+    {
+      id: "07",
+      name: "Skincare",
+      description: "Produtos para cuidados com a pele",
+      icon: "🧴"
+    },
+
+    {
+      id: "08",
+      name: "Vale-compras Riachuelo ou C&A",
+      description: "Vale-presente de qualquer valor",
+      icon: "🎁"
+    },
+
+    {
+      id: "09",
+      name: "Vale-presente de livraria",
+      description: "Vale-compras para uma livraria",
+      icon: "📚"
+    }
+  ]
 };
 
-document.title = CONFIG.title;
-document.querySelector("#title").textContent = CONFIG.title;
-document.querySelector("#subtitle").textContent = CONFIG.subtitle;
 
-const list = document.querySelector("#gift-list");
-const statusBox = document.querySelector("#status");
-const dialog = document.querySelector("#confirm-dialog");
-const selectedName = document.querySelector("#selected-name");
-const confirmBtn = document.querySelector("#confirm-btn");
+// ============================================================
+// ELEMENTOS DA PÁGINA
+// ============================================================
+
+const titleElement = document.querySelector("#title");
+const subtitleElement = document.querySelector("#subtitle");
+const giftsContainer = document.querySelector("#gifts");
+const statusElement = document.querySelector("#status");
+
+const dialog = document.querySelector("#confirmDialog");
+const dialogGiftName = document.querySelector("#dialogGiftName");
+const confirmButton = document.querySelector("#confirmButton");
+const cancelButton = document.querySelector("#cancelButton");
+
+
+// ============================================================
+// CONFIGURAÇÃO DO TÍTULO
+// ============================================================
+
+if (titleElement) {
+  titleElement.textContent = CONFIG.title;
+}
+
+if (subtitleElement) {
+  subtitleElement.textContent = CONFIG.subtitle;
+}
+
+
+// ============================================================
+// PRESENTE SELECIONADO
+// ============================================================
 
 let selectedGift = null;
-let reserved = new Set();
 
-function render() {
-  list.innerHTML = "";
 
-  for (const gift of CONFIG.gifts) {
-    const isReserved = reserved.has(gift.id);
+// ============================================================
+// RENDERIZAÇÃO DOS PRESENTES
+// ============================================================
+
+function renderGifts(reservedGifts = {}) {
+  if (!giftsContainer) {
+    return;
+  }
+
+  giftsContainer.innerHTML = "";
+
+  CONFIG.gifts.forEach((gift) => {
+    const reserved = reservedGifts[gift.id] === true;
 
     const card = document.createElement("article");
-    card.className = "gift";
 
-    const icon = document.createElement("div");
-    icon.className = "gift-icon";
-    icon.textContent = gift.icon || "🎁";
+    card.className = "gift-card";
 
-    const info = document.createElement("div");
-    info.className = "gift-info";
-
-    const name = document.createElement("h2");
-    name.className = "gift-name";
-    name.textContent = gift.name;
-
-    info.appendChild(name);
-
-    if (gift.description) {
-      const description = document.createElement("div");
-      description.className = "gift-description";
-      description.textContent = gift.description;
-      info.appendChild(description);
+    if (reserved) {
+      card.classList.add("reserved");
     }
 
-    const button = document.createElement("button");
-    button.className = "reserve";
-    button.disabled = isReserved;
-    button.textContent = isReserved ? "Já escolhido" : "Vou dar este";
+    card.innerHTML = `
+      <div class="gift-icon">
+        ${gift.icon}
+      </div>
 
-    if (!isReserved) {
-      button.addEventListener("click", () => openConfirmation(gift));
+      <div class="gift-content">
+        <h3>${gift.name}</h3>
+
+        ${
+          gift.description
+            ? `<p>${gift.description}</p>`
+            : ""
+        }
+      </div>
+
+      <button
+        class="gift-button"
+        ${reserved ? "disabled" : ""}
+        data-gift-id="${gift.id}"
+      >
+        ${reserved ? "Já escolhido" : "Vou dar este"}
+      </button>
+    `;
+
+    const button = card.querySelector(".gift-button");
+
+    if (!reserved) {
+      button.addEventListener("click", () => {
+        openConfirmation(gift);
+      });
     }
 
-    card.append(icon, info, button);
-    list.appendChild(card);
-  }
+    giftsContainer.appendChild(card);
+  });
 }
+
+
+// ============================================================
+// CONFIRMAÇÃO
+// ============================================================
 
 function openConfirmation(gift) {
   selectedGift = gift;
-  selectedName.textContent = gift.name;
-  dialog.showModal();
+
+  if (dialogGiftName) {
+    dialogGiftName.textContent = gift.name;
+  }
+
+  if (dialog) {
+    dialog.showModal();
+  }
 }
 
-function closeDialog() {
+
+function closeConfirmation() {
   selectedGift = null;
-  dialog.close();
+
+  if (dialog) {
+    dialog.close();
+  }
 }
 
-document.querySelector("#cancel-btn").addEventListener("click", closeDialog);
-document.querySelector("#close-dialog").addEventListener("click", closeDialog);
 
-dialog.addEventListener("click", (event) => {
-  if (event.target === dialog) closeDialog();
-});
+if (cancelButton) {
+  cancelButton.addEventListener("click", () => {
+    closeConfirmation();
+  });
+}
 
-confirmBtn.addEventListener("click", async () => {
-  if (!selectedGift) return;
 
-  confirmBtn.disabled = true;
-  confirmBtn.textContent = "Reservando...";
+// ============================================================
+// RESERVAR PRESENTE
+// ============================================================
 
-  try {
-    const giftRef = doc(db, CONFIG.collection, selectedGift.id);
+if (confirmButton) {
+  confirmButton.addEventListener("click", async () => {
 
-    await runTransaction(db, async (transaction) => {
-      const snapshot = await transaction.get(giftRef);
+    if (!selectedGift) {
+      return;
+    }
 
-      if (snapshot.exists() && snapshot.data().reserved === true) {
-        throw new Error("ALREADY_RESERVED");
+    const gift = selectedGift;
+
+    confirmButton.disabled = true;
+    confirmButton.textContent = "Reservando...";
+
+    try {
+
+      const giftRef = doc(
+        db,
+        CONFIG.collection,
+        gift.id
+      );
+
+      await runTransaction(db, async (transaction) => {
+
+        const snapshot = await transaction.get(giftRef);
+
+        if (
+          snapshot.exists() &&
+          snapshot.data().reserved === true
+        ) {
+          throw new Error("ALREADY_RESERVED");
+        }
+
+        transaction.set(
+          giftRef,
+          {
+            name: gift.name,
+            reserved: true,
+            reservedAt: serverTimestamp()
+          },
+          {
+            merge: true
+          }
+        );
+
+      });
+
+      closeConfirmation();
+
+      showStatus(
+        "Presente reservado com sucesso!",
+        "success"
+      );
+
+    } catch (error) {
+
+      console.error(error);
+
+      closeConfirmation();
+
+      if (error.message === "ALREADY_RESERVED") {
+
+        showStatus(
+          "Esse presente acabou de ser escolhido por outra pessoa.",
+          "error"
+        );
+
+      } else {
+
+        showStatus(
+          "Não foi possível reservar o presente. Tente novamente.",
+          "error"
+        );
       }
 
-      transaction.set(giftRef, {
-        name: selectedGift.name,
-        reserved: true,
-        reservedAt: serverTimestamp()
-      }, { merge: true });
-    });
+    } finally {
 
-    closeDialog();
-    showStatus("Presente reservado! Obrigado pelo carinho.");
-  } catch (error) {
-    if (error.message === "ALREADY_RESERVED") {
-      showStatus("Esse presente acabou de ser escolhido por outra pessoa. Escolha outro da lista.");
-    } else {
-      console.error(error);
-      showStatus("Não foi possível reservar agora. Verifique sua conexão e tente novamente.");
+      confirmButton.disabled = false;
+      confirmButton.textContent = "Confirmar";
+
     }
-  } finally {
-    confirmBtn.disabled = false;
-    confirmBtn.textContent = "Confirmar";
-  }
-});
-
-function showStatus(message) {
-  statusBox.textContent = message;
-  statusBox.hidden = false;
-  setTimeout(() => statusBox.hidden = true, 5000);
+  });
 }
 
-const giftsRef = collection(db, CONFIG.collection);
 
-onSnapshot(giftsRef, (snapshot) => {
-  reserved = new Set(
-    snapshot.docs
-      .filter(d => d.data().reserved === true)
-      .map(d => d.id)
-  );
-  render();
-}, (error) => {
-  console.error(error);
-  showStatus("Não foi possível carregar a lista. Confira a configuração do Firebase.");
-});
+// ============================================================
+// STATUS
+// ============================================================
 
-render();
+function showStatus(message, type = "") {
+
+  if (!statusElement) {
+    return;
+  }
+
+  statusElement.textContent = message;
+
+  statusElement.className = "status";
+
+  if (type) {
+    statusElement.classList.add(type);
+  }
+
+  setTimeout(() => {
+
+    statusElement.textContent = "";
+    statusElement.className = "status";
+
+  }, 5000);
+}
+
+
+// ============================================================
+// FIRESTORE
+// ============================================================
+
+const giftsCollection = collection(
+  db,
+  CONFIG.collection
+);
+
+onSnapshot(
+  giftsCollection,
+  (snapshot) => {
+
+    const reservedGifts = {};
+
+    snapshot.forEach((document) => {
+
+      const data = document.data();
+
+      if (data.reserved === true) {
+        reservedGifts[document.id] = true;
+      }
+
+    });
+
+    renderGifts(reservedGifts);
+
+  },
+
+  (error) => {
+
+    console.error(
+      "Erro ao carregar presentes:",
+      error
+    );
+
+    showStatus(
+      "Não foi possível carregar a lista de presentes.",
+      "error"
+    );
+
+  }
+);
+
+
+// ============================================================
+// PIX
+// ============================================================
+
+const PIX_KEY = "pachecobeltrame@gmail.com";
+
+function createPixSection() {
+
+  const container = document.querySelector(".container");
+
+  if (!container) {
+    return;
+  }
+
+  const pixSection = document.createElement("section");
+
+  pixSection.className = "pix-section";
+
+  pixSection.innerHTML = `
+    <div class="pix-icon">
+      💰
+    </div>
+
+    <div class="pix-content">
+
+      <h2>Presente via Pix</h2>
+
+      <p>
+        Se preferir, você também pode contribuir
+        através do Pix.
+      </p>
+
+      <div class="pix-key">
+        ${PIX_KEY}
+      </div>
+
+      <button
+        type="button"
+        id="copyPixButton"
+        class="pix-button"
+      >
+        Copiar chave Pix
+      </button>
+
+      <div
+        id="pixMessage"
+        class="pix-message"
+      ></div>
+
+    </div>
+  `;
+
+  container.appendChild(pixSection);
+
+  const copyButton =
+    document.querySelector("#copyPixButton");
+
+  const pixMessage =
+    document.querySelector("#pixMessage");
+
+  if (copyButton) {
+
+    copyButton.addEventListener(
+      "click",
+      async () => {
+
+        try {
+
+          await navigator.clipboard.writeText(
+            PIX_KEY
+          );
+
+          if (pixMessage) {
+            pixMessage.textContent =
+              "Chave Pix copiada!";
+          }
+
+          copyButton.textContent =
+            "Chave copiada!";
+
+          setTimeout(() => {
+
+            copyButton.textContent =
+              "Copiar chave Pix";
+
+            if (pixMessage) {
+              pixMessage.textContent = "";
+            }
+
+          }, 3000);
+
+        } catch (error) {
+
+          console.error(
+            "Erro ao copiar chave Pix:",
+            error
+          );
+
+          if (pixMessage) {
+            pixMessage.textContent =
+              "Não foi possível copiar automaticamente. Toque e segure a chave para copiar.";
+          }
+
+        }
+
+      }
+    );
+  }
+}
+
+
+// ============================================================
+// INICIALIZA PIX
+// ============================================================
+
+createPixSection();
