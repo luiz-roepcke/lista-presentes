@@ -55,9 +55,10 @@ h1 {
 .gift-list {
   display: grid;
   gap: 12px;
+  margin-bottom: 32px;
 }
 
-.gift {
+.gift-card {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -66,6 +67,12 @@ h1 {
   align-items: center;
   gap: 16px;
   box-shadow: 0 3px 12px rgba(40, 30, 20, .04);
+  transition: opacity 0.2s ease;
+}
+
+.gift-card.reserved {
+  opacity: 0.75;
+  background: #f7f5f2;
 }
 
 .gift-icon {
@@ -79,21 +86,22 @@ h1 {
   font-size: 23px;
 }
 
-.gift-info {
+.gift-content {
   flex: 1;
   min-width: 0;
 }
 
-.gift-name {
+.gift-content h3 {
   font-size: 18px;
   margin: 0 0 4px;
 }
 
-.gift-description {
+.gift-content p {
   font-family: Arial, sans-serif;
   color: var(--muted);
   font-size: 13px;
   line-height: 1.4;
+  margin: 0;
 }
 
 button {
@@ -102,7 +110,7 @@ button {
   cursor: pointer;
 }
 
-.reserve {
+.gift-button {
   background: var(--accent);
   color: white;
   border-radius: 10px;
@@ -112,13 +120,88 @@ button {
   white-space: nowrap;
 }
 
-.reserve:hover { background: var(--accent-dark); }
+.gift-button:hover { background: var(--accent-dark); }
 
-.reserve:disabled {
+.gift-button:disabled {
   background: transparent;
   color: var(--reserved);
   cursor: default;
   border: 1px solid var(--border);
+}
+
+/* Seção Pix */
+.pix-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 3px 12px rgba(40, 30, 20, .04);
+  margin-top: 24px;
+}
+
+.pix-icon {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  border-radius: 50%;
+  background: #f2ece5;
+  display: grid;
+  place-items: center;
+  font-size: 23px;
+}
+
+.pix-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.pix-content h2 {
+  font-size: 18px;
+  margin: 0 0 4px;
+  font-weight: 400;
+}
+
+.pix-content p {
+  font-family: Arial, sans-serif;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 0 0 12px;
+}
+
+.pix-key {
+  font-family: monospace;
+  background: var(--bg);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+  display: inline-block;
+  margin-bottom: 12px;
+}
+
+.pix-button {
+  background: #eee9e3;
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.pix-button:hover {
+  background: var(--border);
+}
+
+.pix-message {
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  color: var(--accent);
+  margin-top: 8px;
 }
 
 .status {
@@ -200,8 +283,10 @@ dialog::backdrop { background: rgba(0,0,0,.42); }
 
 @media (max-width: 520px) {
   .container { width: min(100% - 22px, 720px); padding-top: 30px; }
-  .gift { padding: 14px; }
-  .gift-icon { width: 42px; height: 42px; flex-basis: 42px; font-size: 20px; }
-  .gift-name { font-size: 16px; }
-  .reserve { padding: 9px 10px; }
+  .gift-card, .pix-section { padding: 14px; flex-direction: column; align-items: flex-start; }
+  .pix-section { align-items: stretch; }
+  .gift-icon, .pix-icon { width: 42px; height: 42px; flex-basis: 42px; font-size: 20px; }
+  .gift-card h3, .pix-content h2 { font-size: 16px; }
+  .gift-button { width: 100%; text-align: center; margin-top: 8px; }
+  .pix-button { margin-left: 0; margin-top: 8px; width: 100%; }
 }

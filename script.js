@@ -84,11 +84,6 @@ const CONFIG = {
   ]
 };
 
-
-// ========================================
-// ELEMENTOS DA PÁGINA
-// ========================================
-
 const titleElement = document.querySelector("#title");
 const subtitleElement = document.querySelector("#subtitle");
 const giftsContainer = document.querySelector("#gift-list");
@@ -108,16 +103,9 @@ if (subtitleElement) {
   subtitleElement.textContent = CONFIG.subtitle;
 }
 
-
 let selectedGift = null;
 
-
-// ========================================
-// MOSTRAR OS PRESENTES
-// ========================================
-
 function renderGifts(reservedGifts = {}) {
-
   if (!giftsContainer) {
     console.error("Elemento #gift-list não encontrado.");
     return;
@@ -126,9 +114,7 @@ function renderGifts(reservedGifts = {}) {
   giftsContainer.innerHTML = "";
 
   CONFIG.gifts.forEach((gift) => {
-
     const reserved = reservedGifts[gift.id] === true;
-
     const card = document.createElement("article");
 
     card.className = "gift-card";
@@ -141,19 +127,11 @@ function renderGifts(reservedGifts = {}) {
       <div class="gift-icon">
         ${gift.icon}
       </div>
-
       <div class="gift-content">
-
         <h3>${gift.name}</h3>
-
         <p>${gift.description}</p>
-
       </div>
-
-      <button
-        class="gift-button"
-        ${reserved ? "disabled" : ""}
-      >
+      <button class="gift-button" ${reserved ? "disabled" : ""}>
         ${reserved ? "Já escolhido" : "Vou dar este"}
       </button>
     `;
@@ -161,25 +139,16 @@ function renderGifts(reservedGifts = {}) {
     const button = card.querySelector(".gift-button");
 
     if (!reserved) {
-
       button.addEventListener("click", () => {
         openConfirmation(gift);
       });
-
     }
 
     giftsContainer.appendChild(card);
-
   });
 }
 
-
-// ========================================
-// ABRIR CONFIRMAÇÃO
-// ========================================
-
 function openConfirmation(gift) {
-
   selectedGift = gift;
 
   if (dialogGiftName) {
@@ -189,55 +158,30 @@ function openConfirmation(gift) {
   if (dialog) {
     dialog.showModal();
   }
-
 }
 
-
-// ========================================
-// FECHAR CONFIRMAÇÃO
-// ========================================
-
 function closeConfirmation() {
-
   selectedGift = null;
 
   if (dialog) {
     dialog.close();
   }
-
 }
 
-
-// ========================================
-// BOTÕES DO MODAL
-// ========================================
-
 if (cancelButton) {
-
   cancelButton.addEventListener("click", () => {
     closeConfirmation();
   });
-
 }
 
-
 if (closeButton) {
-
   closeButton.addEventListener("click", () => {
     closeConfirmation();
   });
-
 }
 
-
-// ========================================
-// CONFIRMAR PRESENTE
-// ========================================
-
 if (confirmButton) {
-
   confirmButton.addEventListener("click", async () => {
-
     if (!selectedGift) {
       return;
     }
@@ -248,96 +192,52 @@ if (confirmButton) {
     confirmButton.textContent = "Reservando...";
 
     try {
+      const giftRef = doc(db, CONFIG.collection, gift.id);
 
-      const giftRef = doc(
-        db,
-        CONFIG.collection,
-        gift.id
-      );
+      await runTransaction(db, async (transaction) => {
+        const snapshot = await transaction.get(giftRef);
 
-      await runTransaction(
-        db,
-        async (transaction) => {
-
-          const snapshot = await transaction.get(giftRef);
-
-          if (
-            snapshot.exists() &&
-            snapshot.data().reserved === true
-          ) {
-
-            throw new Error("ALREADY_RESERVED");
-
-          }
-
-          transaction.set(
-            giftRef,
-            {
-              name: gift.name,
-              reserved: true,
-              reservedAt: serverTimestamp()
-            },
-            {
-              merge: true
-            }
-          );
-
+        if (snapshot.exists() && snapshot.data().reserved === true) {
+          throw new Error("ALREADY_RESERVED");
         }
-      );
+
+        transaction.set(
+          giftRef,
+          {
+            name: gift.name,
+            reserved: true,
+            reservedAt: serverTimestamp()
+          },
+          {
+            merge: true
+          }
+        );
+      });
 
       closeConfirmation();
-
-      showStatus(
-        "Presente reservado com sucesso!",
-        "success"
-      );
-
+      showStatus("Presente reservado com sucesso!", "success");
     } catch (error) {
-
       console.error(error);
-
       closeConfirmation();
 
       if (error.message === "ALREADY_RESERVED") {
-
-        showStatus(
-          "Esse presente acabou de ser escolhido por outra pessoa.",
-          "error"
-        );
-
+        showStatus("Esse presente acabou de ser escolhido por outra pessoa.", "error");
       } else {
-
-        showStatus(
-          "Não foi possível reservar o presente. Tente novamente.",
-          "error"
-        );
-
+        showStatus("Não foi possível reservar o presente. Tente novamente.", "error");
       }
-
     } finally {
-
       confirmButton.disabled = false;
       confirmButton.textContent = "Confirmar";
-
     }
-
   });
-
 }
 
-
-// ========================================
-// MENSAGENS
-// ========================================
-
 function showStatus(message, type = "") {
-
   if (!statusElement) {
     return;
   }
 
   statusElement.textContent = message;
-
   statusElement.className = "status";
 
   if (type) {
@@ -347,89 +247,40 @@ function showStatus(message, type = "") {
   statusElement.hidden = false;
 
   setTimeout(() => {
-
     statusElement.textContent = "";
-
     statusElement.className = "status";
-
     statusElement.hidden = true;
-
   }, 5000);
-
 }
 
-
-// ========================================
-// FIRESTORE
-// ========================================
-
-const giftsCollection = collection(
-  db,
-  CONFIG.collection
-);
-
-
-// IMPORTANTE:
-// Mostra os 9 presentes imediatamente.
-// Assim eles aparecem mesmo enquanto
-// o Firestore está carregando.
+const giftsCollection = collection(db, CONFIG.collection);
 
 renderGifts({});
 
-
-// Depois acompanha as reservas
-// feitas pelas pessoas.
-
 onSnapshot(
-
   giftsCollection,
-
   (snapshot) => {
-
     const reservedGifts = {};
 
     snapshot.forEach((document) => {
-
       const data = document.data();
 
       if (data.reserved === true) {
-
         reservedGifts[document.id] = true;
-
       }
-
     });
 
     renderGifts(reservedGifts);
-
   },
-
   (error) => {
-
-    console.error(
-      "Erro ao carregar reservas do Firestore:",
-      error
-    );
-
-    showStatus(
-      "A lista está disponível, mas não foi possível atualizar as reservas.",
-      "error"
-    );
-
+    console.error("Erro ao carregar reservas do Firestore:", error);
+    showStatus("A lista está disponível, mas não foi possível atualizar as reservas.", "error");
   }
-
 );
-
-
-// ========================================
-// PIX
-// ========================================
 
 const PIX_KEY = "pachecobeltrame@gmail.com";
 
-
 function createPixSection() {
-
   const container = document.querySelector(".container");
 
   if (!container) {
@@ -437,114 +288,53 @@ function createPixSection() {
   }
 
   const pixSection = document.createElement("section");
-
   pixSection.className = "pix-section";
 
   pixSection.innerHTML = `
-
     <div class="pix-icon">
       💰
     </div>
-
     <div class="pix-content">
-
       <h2>Presente via Pix</h2>
-
-      <p>
-        Se preferir, você também pode contribuir através do Pix.
-      </p>
-
-      <div class="pix-key">
-        ${PIX_KEY}
-      </div>
-
-      <button
-        type="button"
-        id="copyPixButton"
-        class="pix-button"
-      >
+      <p>Se preferir, você também pode contribuir através do Pix.</p>
+      <div class="pix-key">${PIX_KEY}</div>
+      <button type="button" id="copyPixButton" class="pix-button">
         Copiar chave Pix
       </button>
-
-      <div
-        id="pixMessage"
-        class="pix-message"
-      ></div>
-
+      <div id="pixMessage" class="pix-message"></div>
     </div>
-
   `;
 
   container.appendChild(pixSection);
 
-
-  const copyButton =
-    document.querySelector("#copyPixButton");
-
-  const pixMessage =
-    document.querySelector("#pixMessage");
-
+  const copyButton = document.querySelector("#copyPixButton");
+  const pixMessage = document.querySelector("#pixMessage");
 
   if (copyButton) {
+    copyButton.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(PIX_KEY);
 
-    copyButton.addEventListener(
-      "click",
-      async () => {
-
-        try {
-
-          await navigator.clipboard.writeText(
-            PIX_KEY
-          );
-
-          if (pixMessage) {
-
-            pixMessage.textContent =
-              "Chave Pix copiada!";
-
-          }
-
-          copyButton.textContent =
-            "Chave copiada!";
-
-
-          setTimeout(() => {
-
-            copyButton.textContent =
-              "Copiar chave Pix";
-
-            if (pixMessage) {
-
-              pixMessage.textContent = "";
-
-            }
-
-          }, 3000);
-
-
-        } catch (error) {
-
-          console.error(
-            "Erro ao copiar chave Pix:",
-            error
-          );
-
-          if (pixMessage) {
-
-            pixMessage.textContent =
-              "Não foi possível copiar automaticamente. Toque e segure a chave para copiar.";
-
-          }
-
+        if (pixMessage) {
+          pixMessage.textContent = "Chave Pix copiada!";
         }
 
+        copyButton.textContent = "Chave copiada!";
+
+        setTimeout(() => {
+          copyButton.textContent = "Copiar chave Pix";
+          if (pixMessage) {
+            pixMessage.textContent = "";
+          }
+        }, 3000);
+      } catch (error) {
+        console.error("Erro ao copiar chave Pix:", error);
+        if (pixMessage) {
+          pixMessage.textContent = "Não foi possível copiar automaticamente.";
+        }
       }
-    );
-
+    });
   }
-
 }
 
-
-// Criar seção do Pix
 createPixSection();
