@@ -85,7 +85,10 @@ const CONFIG = {
 };
 
 
-// Elementos da página
+// ========================================
+// ELEMENTOS DA PÁGINA
+// ========================================
+
 const titleElement = document.querySelector("#title");
 const subtitleElement = document.querySelector("#subtitle");
 const giftsContainer = document.querySelector("#gift-list");
@@ -97,8 +100,6 @@ const confirmButton = document.querySelector("#confirm-btn");
 const cancelButton = document.querySelector("#cancel-btn");
 const closeButton = document.querySelector("#close-dialog");
 
-
-// Título
 if (titleElement) {
   titleElement.textContent = CONFIG.title;
 }
@@ -108,11 +109,13 @@ if (subtitleElement) {
 }
 
 
-// Presente selecionado
 let selectedGift = null;
 
 
-// Renderiza os presentes
+// ========================================
+// MOSTRAR OS PRESENTES
+// ========================================
+
 function renderGifts(reservedGifts = {}) {
 
   if (!giftsContainer) {
@@ -140,9 +143,11 @@ function renderGifts(reservedGifts = {}) {
       </div>
 
       <div class="gift-content">
+
         <h3>${gift.name}</h3>
 
         <p>${gift.description}</p>
+
       </div>
 
       <button
@@ -153,9 +158,7 @@ function renderGifts(reservedGifts = {}) {
       </button>
     `;
 
-
     const button = card.querySelector(".gift-button");
-
 
     if (!reserved) {
 
@@ -165,15 +168,16 @@ function renderGifts(reservedGifts = {}) {
 
     }
 
-
     giftsContainer.appendChild(card);
 
   });
-
 }
 
 
-// Abre confirmação
+// ========================================
+// ABRIR CONFIRMAÇÃO
+// ========================================
+
 function openConfirmation(gift) {
 
   selectedGift = gift;
@@ -189,7 +193,10 @@ function openConfirmation(gift) {
 }
 
 
-// Fecha confirmação
+// ========================================
+// FECHAR CONFIRMAÇÃO
+// ========================================
+
 function closeConfirmation() {
 
   selectedGift = null;
@@ -201,7 +208,10 @@ function closeConfirmation() {
 }
 
 
-// Botão voltar
+// ========================================
+// BOTÕES DO MODAL
+// ========================================
+
 if (cancelButton) {
 
   cancelButton.addEventListener("click", () => {
@@ -211,7 +221,6 @@ if (cancelButton) {
 }
 
 
-// Botão X
 if (closeButton) {
 
   closeButton.addEventListener("click", () => {
@@ -221,7 +230,10 @@ if (closeButton) {
 }
 
 
-// Confirmar reserva
+// ========================================
+// CONFIRMAR PRESENTE
+// ========================================
+
 if (confirmButton) {
 
   confirmButton.addEventListener("click", async () => {
@@ -235,7 +247,6 @@ if (confirmButton) {
     confirmButton.disabled = true;
     confirmButton.textContent = "Reservando...";
 
-
     try {
 
       const giftRef = doc(
@@ -244,36 +255,35 @@ if (confirmButton) {
         gift.id
       );
 
+      await runTransaction(
+        db,
+        async (transaction) => {
 
-      await runTransaction(db, async (transaction) => {
+          const snapshot = await transaction.get(giftRef);
 
-        const snapshot = await transaction.get(giftRef);
+          if (
+            snapshot.exists() &&
+            snapshot.data().reserved === true
+          ) {
 
+            throw new Error("ALREADY_RESERVED");
 
-        if (
-          snapshot.exists() &&
-          snapshot.data().reserved === true
-        ) {
+          }
 
-          throw new Error("ALREADY_RESERVED");
+          transaction.set(
+            giftRef,
+            {
+              name: gift.name,
+              reserved: true,
+              reservedAt: serverTimestamp()
+            },
+            {
+              merge: true
+            }
+          );
 
         }
-
-
-        transaction.set(
-          giftRef,
-          {
-            name: gift.name,
-            reserved: true,
-            reservedAt: serverTimestamp()
-          },
-          {
-            merge: true
-          }
-        );
-
-      });
-
+      );
 
       closeConfirmation();
 
@@ -282,13 +292,11 @@ if (confirmButton) {
         "success"
       );
 
-
     } catch (error) {
 
       console.error(error);
 
       closeConfirmation();
-
 
       if (error.message === "ALREADY_RESERVED") {
 
@@ -306,7 +314,6 @@ if (confirmButton) {
 
       }
 
-
     } finally {
 
       confirmButton.disabled = false;
@@ -319,7 +326,10 @@ if (confirmButton) {
 }
 
 
-// Mensagem de status
+// ========================================
+// MENSAGENS
+// ========================================
+
 function showStatus(message, type = "") {
 
   if (!statusElement) {
@@ -336,7 +346,6 @@ function showStatus(message, type = "") {
 
   statusElement.hidden = false;
 
-
   setTimeout(() => {
 
     statusElement.textContent = "";
@@ -350,20 +359,34 @@ function showStatus(message, type = "") {
 }
 
 
-// Carrega reservas do Firestore
+// ========================================
+// FIRESTORE
+// ========================================
+
 const giftsCollection = collection(
   db,
   CONFIG.collection
 );
 
 
+// IMPORTANTE:
+// Mostra os 9 presentes imediatamente.
+// Assim eles aparecem mesmo enquanto
+// o Firestore está carregando.
+
+renderGifts({});
+
+
+// Depois acompanha as reservas
+// feitas pelas pessoas.
+
 onSnapshot(
+
   giftsCollection,
 
   (snapshot) => {
 
     const reservedGifts = {};
-
 
     snapshot.forEach((document) => {
 
@@ -377,21 +400,19 @@ onSnapshot(
 
     });
 
-
     renderGifts(reservedGifts);
 
   },
 
-
   (error) => {
 
     console.error(
-      "Erro ao carregar presentes:",
+      "Erro ao carregar reservas do Firestore:",
       error
     );
 
     showStatus(
-      "Não foi possível carregar a lista de presentes.",
+      "A lista está disponível, mas não foi possível atualizar as reservas.",
       "error"
     );
 
@@ -400,10 +421,9 @@ onSnapshot(
 );
 
 
-
-// ==============================
+// ========================================
 // PIX
-// ==============================
+// ========================================
 
 const PIX_KEY = "pachecobeltrame@gmail.com";
 
@@ -416,11 +436,9 @@ function createPixSection() {
     return;
   }
 
-
   const pixSection = document.createElement("section");
 
   pixSection.className = "pix-section";
-
 
   pixSection.innerHTML = `
 
@@ -457,7 +475,6 @@ function createPixSection() {
 
   `;
 
-
   container.appendChild(pixSection);
 
 
@@ -480,12 +497,12 @@ function createPixSection() {
             PIX_KEY
           );
 
-
           if (pixMessage) {
+
             pixMessage.textContent =
               "Chave Pix copiada!";
-          }
 
+          }
 
           copyButton.textContent =
             "Chave copiada!";
@@ -497,7 +514,9 @@ function createPixSection() {
               "Copiar chave Pix";
 
             if (pixMessage) {
+
               pixMessage.textContent = "";
+
             }
 
           }, 3000);
@@ -509,7 +528,6 @@ function createPixSection() {
             "Erro ao copiar chave Pix:",
             error
           );
-
 
           if (pixMessage) {
 
@@ -528,4 +546,5 @@ function createPixSection() {
 }
 
 
+// Criar seção do Pix
 createPixSection();
